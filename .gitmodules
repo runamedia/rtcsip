@@ -1,0 +1,3 @@
+[submodule "source/thirdParty/resiprocate"]
+	path = source/thirdParty/resiprocate
+	url = https://github.com/runamedia/resiprocate

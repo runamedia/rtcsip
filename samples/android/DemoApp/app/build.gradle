@@ -1,0 +1,30 @@
+apply plugin: 'com.android.model.application'
+
+model {
+    android {
+        compileSdkVersion = 22
+        buildToolsVersion = "22.0.1"
+
+        defaultConfig.with {
+            applicationId = "com.runamedia.rtc.demoapp"
+            minSdkVersion.apiLevel = 11
+            targetSdkVersion.apiLevel = 22
+        }
+    }
+    android.buildTypes {
+        release {
+            minifyEnabled = false
+            proguardFiles += file('proguard-rules.txt')
+        }
+     }
+    android.productFlavors {
+        create ("armv7") {
+            ndk.abiFilters += "armeabi-v7a"
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:22.2.0'
+}

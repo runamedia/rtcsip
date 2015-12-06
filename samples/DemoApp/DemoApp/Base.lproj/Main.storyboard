@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9060" systemVersion="15B42" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="YQv-wl-Qxn">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9051"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+    </dependencies>
+    <scenes>
+        <!--Choose user for login-->
+        <scene sceneID="ueh-pL-akJ">
+            <objects>
+                <tableViewController id="1Qa-De-PIV" customClass="DemoTableViewController" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="yCg-jR-tUJ">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <animations/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <prototypes>
+                            <tableViewCell contentMode="scaleToFill" restorationIdentifier="cellContact" selectionStyle="default" indentationWidth="10" reuseIdentifier="cellContact" textLabel="xJ7-YW-bnc" style="IBUITableViewCellStyleDefault" id="QqK-cC-R2U">
+                                <rect key="frame" x="0.0" y="86" width="600" height="44"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="QqK-cC-R2U" id="eMW-Jx-gIP">
+                                    <rect key="frame" x="0.0" y="0.0" width="600" height="43"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Title" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="xJ7-YW-bnc">
+                                            <rect key="frame" x="15" y="0.0" width="570" height="43"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <animations/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <animations/>
+                                </tableViewCellContentView>
+                                <animations/>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="1Qa-De-PIV" id="yTM-TH-AYG"/>
+                            <outlet property="delegate" destination="1Qa-De-PIV" id="1sm-gd-bMB"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Choose user for login" id="M2B-Lk-H7Q"/>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="vqO-YW-UyH" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="584" y="337"/>
+        </scene>
+        <!--rtcsip demo-->
+        <scene sceneID="CfN-4A-9sE">
+            <objects>
+                <navigationController title="rtcsip demo" id="YQv-wl-Qxn" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="zhH-gT-wo4">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <animations/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="1Qa-De-PIV" kind="relationship" relationship="rootViewController" id="R27-Qe-iDG"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="JD8-5c-IPg" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-142" y="337"/>
+        </scene>
+        <!--Video Call View Controller-->
+        <scene sceneID="518-1T-DtN">
+            <objects>
+                <viewController storyboardIdentifier="VideoViewController" id="sir-VP-Pkg" customClass="VideoCallViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Rki-v2-CEm"/>
+                        <viewControllerLayoutGuide type="bottom" id="oNK-KW-lHG"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="80r-WF-c6T">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="480"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="T1R-2X-yRR" customClass="RTCEAGLVideoView">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="420"/>
+                                <animations/>
+                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="jPA-op-00E" customClass="RTCEAGLVideoView">
+                                <rect key="frame" x="174" y="236" width="130" height="170"/>
+                                <animations/>
+                                <color key="backgroundColor" red="0.48601246840000001" green="0.44487828810000002" blue="0.2715170495" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="130" id="TqT-i7-N3w"/>
+                                    <constraint firstAttribute="height" constant="170" id="wEu-Jl-H6s"/>
+                                </constraints>
+                            </view>
+                            <button hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="WXm-kC-iMP">
+                                <rect key="frame" x="57" y="430" width="207" height="42"/>
+                                <animations/>
+                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="207" id="8nP-TP-FJq"/>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="207" id="Mex-ku-VRp"/>
+                                    <constraint firstAttribute="height" constant="42" id="bFj-Fu-RuS"/>
+                                </constraints>
+                                <state key="normal" title="End Call">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="actionEndCall:" destination="sir-VP-Pkg" eventType="touchUpInside" id="A92-eV-p2A"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nOD-Wp-ARU">
+                                <rect key="frame" x="16" y="430" width="130" height="42"/>
+                                <animations/>
+                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="130" id="3b3-Lp-QxZ"/>
+                                    <constraint firstAttribute="height" constant="42" id="fMN-Q1-WkE"/>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="130" id="xaQ-hV-WQk"/>
+                                </constraints>
+                                <state key="normal" title="Audio Call">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="actionMakeAudioCall:" destination="sir-VP-Pkg" eventType="touchUpInside" id="WVw-Tg-2XK"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1Pp-wi-pnU">
+                                <rect key="frame" x="174" y="430" width="130" height="42"/>
+                                <animations/>
+                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="130" id="1MJ-fy-9ef"/>
+                                    <constraint firstAttribute="width" constant="130" id="ptL-IA-pu7"/>
+                                    <constraint firstAttribute="height" constant="42" id="v2w-V2-tgo"/>
+                                </constraints>
+                                <state key="normal" title="Video Call">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="actionMakeVideoCall:" destination="sir-VP-Pkg" eventType="touchUpInside" id="qwM-66-V0V"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <animations/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="nOD-Wp-ARU" firstAttribute="width" secondItem="1Pp-wi-pnU" secondAttribute="width" id="4Nr-ht-BHb"/>
+                            <constraint firstItem="oNK-KW-lHG" firstAttribute="top" secondItem="1Pp-wi-pnU" secondAttribute="bottom" constant="8" id="B33-kb-988"/>
+                            <constraint firstItem="1Pp-wi-pnU" firstAttribute="leading" secondItem="nOD-Wp-ARU" secondAttribute="trailing" constant="28" id="D9R-M6-ApY"/>
+                            <constraint firstItem="oNK-KW-lHG" firstAttribute="top" secondItem="nOD-Wp-ARU" secondAttribute="bottom" constant="8" id="Ek2-48-eo1"/>
+                            <constraint firstItem="1Pp-wi-pnU" firstAttribute="top" secondItem="T1R-2X-yRR" secondAttribute="bottom" constant="10" id="F25-OW-cBd"/>
+                            <constraint firstAttribute="trailing" secondItem="T1R-2X-yRR" secondAttribute="trailing" id="GTD-AI-2SV"/>
+                            <constraint firstItem="nOD-Wp-ARU" firstAttribute="top" secondItem="T1R-2X-yRR" secondAttribute="bottom" constant="10" id="NDe-h1-K9l"/>
+                            <constraint firstItem="nOD-Wp-ARU" firstAttribute="leading" secondItem="80r-WF-c6T" secondAttribute="leadingMargin" id="P7O-KM-GLH"/>
+                            <constraint firstItem="T1R-2X-yRR" firstAttribute="top" secondItem="80r-WF-c6T" secondAttribute="top" id="SI9-j6-nl5"/>
+                            <constraint firstItem="oNK-KW-lHG" firstAttribute="top" secondItem="WXm-kC-iMP" secondAttribute="bottom" constant="8" id="VIb-Uz-CKU"/>
+                            <constraint firstItem="1Pp-wi-pnU" firstAttribute="leading" secondItem="nOD-Wp-ARU" secondAttribute="trailing" constant="28" id="YKu-tG-hvI"/>
+                            <constraint firstAttribute="centerX" secondItem="WXm-kC-iMP" secondAttribute="centerX" id="aEG-qv-j4g"/>
+                            <constraint firstAttribute="trailing" secondItem="jPA-op-00E" secondAttribute="trailing" constant="16" id="icb-u8-yeA"/>
+                            <constraint firstItem="T1R-2X-yRR" firstAttribute="leading" secondItem="80r-WF-c6T" secondAttribute="leading" id="vie-nk-KqR"/>
+                            <constraint firstItem="WXm-kC-iMP" firstAttribute="top" secondItem="jPA-op-00E" secondAttribute="bottom" constant="24" id="xpN-SW-V9a"/>
+                            <constraint firstItem="WXm-kC-iMP" firstAttribute="top" secondItem="T1R-2X-yRR" secondAttribute="bottom" constant="10" id="y1n-Ke-ZUz"/>
+                            <constraint firstItem="1Pp-wi-pnU" firstAttribute="trailing" secondItem="80r-WF-c6T" secondAttribute="trailingMargin" id="ya1-lR-QmG"/>
+                        </constraints>
+                    </view>
+                    <simulatedScreenMetrics key="simulatedDestinationMetrics"/>
+                    <connections>
+                        <outlet property="buttonAudioCall" destination="nOD-Wp-ARU" id="014-2Q-QuR"/>
+                        <outlet property="buttonEndCall" destination="WXm-kC-iMP" id="keo-ny-JVL"/>
+                        <outlet property="buttonVideoCall" destination="1Pp-wi-pnU" id="but-Sy-Vdd"/>
+                        <outlet property="localVideoView" destination="jPA-op-00E" id="Lta-bm-g87"/>
+                        <outlet property="remoteVideoView" destination="T1R-2X-yRR" id="65c-6m-8U0"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ord-0x-d2f" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1392" y="337"/>
+        </scene>
+    </scenes>
+</document>
