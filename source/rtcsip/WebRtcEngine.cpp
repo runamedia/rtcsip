@@ -232,9 +232,6 @@ namespace rtcsip
                     return;
                 }
             } else {
-                __android_log_print(ANDROID_LOG_VERBOSE, "WebRtcEngine",
-                                    "WebRtcEngine::createLocalStream - 1 - %d, %d", m_capturer, m_captureConstraints);
-
                 rtc::scoped_refptr<webrtc::VideoSourceInterface> videoSource(
                         m_peerConnectionFactory->CreateVideoSource(m_capturer,
                                                                    m_captureConstraints));
@@ -242,9 +239,6 @@ namespace rtcsip
                     printf("PeerConnectionFactoryInterface::CreateVideoSource() failed\n");
                     return;
                 }
-
-                __android_log_print(ANDROID_LOG_VERBOSE, "WebRtcEngine",
-                                    "WebRtcEngine::createLocalStream - 2");
 
                 rtc::scoped_refptr<webrtc::VideoTrackInterface> videoTrack =
                         m_peerConnectionFactory->CreateVideoTrack("video_track", videoSource.get());
@@ -260,9 +254,6 @@ namespace rtcsip
                     printf("VideoTrackInterface::AddTrack() failed\n");
                     return;
                 }
-
-                __android_log_print(ANDROID_LOG_VERBOSE, "WebRtcEngine",
-                                    "WebRtcEngine::createLocalStream - 3");
             }
         }
       
