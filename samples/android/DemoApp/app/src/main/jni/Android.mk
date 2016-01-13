@@ -144,11 +144,6 @@ LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libg722.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := icuuc
-LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libicuuc.a
-include $(PREBUILT_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
 LOCAL_MODULE := ilbc
 LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libilbc.a
 include $(PREBUILT_STATIC_LIBRARY)
@@ -259,6 +254,11 @@ LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libremote_bitrate_estimator.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE := rent_a_codec
+LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/librent_a_codec.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE := rtc_base
 LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/librtc_base.a
 include $(PREBUILT_STATIC_LIBRARY)
@@ -266,6 +266,16 @@ include $(PREBUILT_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := rtc_base_approved
 LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/librtc_base_approved.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := rtc_event_log
+LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/librtc_event_log.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := rtc_event_log_proto
+LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/librtc_event_log_proto.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -299,11 +309,6 @@ LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libvideo_capture_module.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := video_capture_module_internal_impl
-LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libvideo_capture_module_internal_impl.a
-include $(PREBUILT_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
 LOCAL_MODULE := video_coding_utility
 LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libvideo_coding_utility.a
 include $(PREBUILT_STATIC_LIBRARY)
@@ -311,6 +316,11 @@ include $(PREBUILT_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := video_processing
 LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libvideo_processing.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := video_processing_neon
+LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libvideo_processing_neon.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -330,7 +340,7 @@ include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := vpx
-LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libvpx.a
+LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libvpx_new.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -356,6 +366,11 @@ include $(PREBUILT_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := webrtc_i420
 LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libwebrtc_i420.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := webrtc_jni
+LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libwebrtc_jni.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -389,13 +404,8 @@ LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libyuv.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := yuv_neon
-LOCAL_SRC_FILES := ../jniLibs/$(TARGET_ARCH_ABI)/libyuv_neon.a
-include $(PREBUILT_STATIC_LIBRARY)
 
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := ResiprocateJni
+LOCAL_MODULE := rtcsip_jni
 
 LOCAL_WHOLE_STATIC_LIBRARIES := resipares \
     rutil \
@@ -420,7 +430,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := resipares \
     field_trial_default \
     g711 \
     g722 \
-    icuuc \
     ilbc \
     isac \
     isac_common \
@@ -443,17 +452,20 @@ LOCAL_WHOLE_STATIC_LIBRARIES := resipares \
     protobuf_lite \
     red \
     remote_bitrate_estimator \
+    rent_a_codec \
     rtc_base \
     rtc_base_approved \
+    rtc_event_log \
+    rtc_event_log_proto \
     rtc_p2p \
     rtp_rtcp \
     srtp \
     system_wrappers \
     usrsctplib \
     video_capture_module \
-    video_capture_module_internal_impl \
     video_coding_utility \
     video_processing \
+    video_processing_neon \
     video_render_module \
     video_render_module_internal_impl \
     voice_engine \
@@ -463,24 +475,24 @@ LOCAL_WHOLE_STATIC_LIBRARIES := resipares \
     webrtc_common \
     webrtc_h264 \
     webrtc_i420 \
+    webrtc_jni \
     webrtc_opus \
     webrtc_utility \
     webrtc_video_coding \
     webrtc_vp8 \
     webrtc_vp9 \
-    yuv \
-    yuv_neon
+    yuv
 
 LOCAL_CPP_FEATURES := rtti exceptions
 
-LOCAL_CFLAGS := -DANDROID -DWEBRTC_POSIX
+LOCAL_CFLAGS := -DWEBRTC_POSIX -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -UNDEBUG
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../../../../../source/thirdParty/resiprocate \
-    $(LOCAL_PATH)/../../../../../../../source/thirdParty/webrtc/src_android
+    $(LOCAL_PATH)/../../../../../../../source/thirdParty/webrtc_android/src
 
 LOCAL_LDLIBS := -llog -landroid -lGLESv2 -lOpenSLES
 
-LOCAL_SRC_FILES := ./resiprocate_jni.cpp \
+LOCAL_SRC_FILES := ./rtcsip_jni.cpp \
     ./SipControllerCore.cpp \
     ./WebRtcEngine.cpp
 

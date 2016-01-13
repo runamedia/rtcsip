@@ -100,7 +100,8 @@ namespace rtcsip
     WebRtcEngine::WebRtcEngine() :
         m_createSdpObserver(new rtc::RefCountedObject<WebRtcEngineCreateSessionDescriptionObserver>()),
         m_setSdpObserver(new rtc::RefCountedObject<WebRtcEngineSetSessionDescriptionObserver>()),
-        m_waitForCallback(false), m_localRenderer(NULL), m_remoteRenderer(NULL),
+        m_waitForCallback(false), m_capturer(NULL), m_captureConstraints(NULL),
+        m_localRenderer(NULL), m_remoteRenderer(NULL),
         m_hasAudio(true), m_hasVideo(true), m_webRtcEngineObserver(NULL)
     {
         m_signalingThread.reset(new rtc::Thread());
@@ -134,7 +135,13 @@ namespace rtcsip
             printf("Failed to deinitialize SSL library\n");
         }
     }
-  
+
+    void WebRtcEngine::setVideoCapturer(cricket::VideoCapturer *capturer, webrtc::MediaConstraintsInterface *captureConstraints)
+    {
+        m_capturer = capturer;
+        m_captureConstraints = captureConstraints;
+    }
+
     void WebRtcEngine::setLocalRenderer(webrtc::VideoRendererInterface *renderer)
     {
         m_localRenderer = renderer;
@@ -160,62 +167,102 @@ namespace rtcsip
         m_localMediaStream = m_peerConnectionFactory->CreateLocalMediaStream("media_stream");
       
         if (m_hasVideo) {
-            rtc::scoped_ptr<cricket::DeviceManagerInterface> deviceManager(cricket::DeviceManagerFactory::Create());
-            bool initialized = deviceManager->Init();
-            if (!initialized) {
-                printf("DeviceManager::Init() failed\n");
-                return;
-            }
-          
-            std::vector<cricket::Device> devices;
-            bool getDevicesSucceeded = deviceManager->GetVideoCaptureDevices(&devices);
-            if (!getDevicesSucceeded) {
-                printf("DeviceManager::GetVideoCaptureDevices() failed\n");
-                return;
-            }
-          
-            cricket::Device cameraDevice;
-            std::vector<cricket::Device>::iterator deviceIter = devices.begin();
-            while (deviceIter != devices.end()) {
-                cameraDevice = *deviceIter;
-                deviceIter++;
-            }
+            if (m_capturer == NULL) {
+                rtc::scoped_ptr<cricket::DeviceManagerInterface> deviceManager(
+                        cricket::DeviceManagerFactory::Create());
+                bool initialized = deviceManager->Init();
+                if (!initialized) {
+                    printf("DeviceManager::Init() failed\n");
+                    return;
+                }
 
-            rtc::scoped_ptr<cricket::VideoCapturer> capturer(deviceManager->CreateVideoCapturer(cameraDevice));
-          
-            webrtc::MediaConstraintsInterface::Constraints mandatory;
-            webrtc::MediaConstraintsInterface::Constraints optional;
-          
-            mandatory.push_back(
-                webrtc::MediaConstraintsInterface::Constraint(webrtc::MediaConstraintsInterface::kMaxWidth, "640"));
-            mandatory.push_back(
-                webrtc::MediaConstraintsInterface::Constraint(webrtc::MediaConstraintsInterface::kMaxHeight, "480"));
-            optional.push_back(
-                webrtc::MediaConstraintsInterface::Constraint(webrtc::MediaConstraintsInterface::kMaxFrameRate, "15"));
-          
-            rtc::scoped_ptr<WebRtcEngineMediaConstraintsInterface> capturerConstraints(
-                new WebRtcEngineMediaConstraintsInterface(mandatory, optional));
-          
-            rtc::scoped_refptr<webrtc::VideoSourceInterface> videoSource(
-                m_peerConnectionFactory->CreateVideoSource(capturer.release(), capturerConstraints.get()));
-            if (videoSource == NULL) {
-                printf("PeerConnectionFactoryInterface::CreateVideoSource() failed\n");
-                return;
-            }
-          
-            rtc::scoped_refptr<webrtc::VideoTrackInterface> videoTrack =
-                m_peerConnectionFactory->CreateVideoTrack("video_track", videoSource.get());
-            if (videoTrack == NULL) {
-                printf("PeerConnectionFactoryInterface::CreateVideoTrack() failed\n");
-                return;
-            }
-          
-            videoTrack->AddRenderer(m_localRenderer);
-          
-            bool addTrackSucceeded = m_localMediaStream->AddTrack(videoTrack.get());
-            if (!addTrackSucceeded) {
-                printf("VideoTrackInterface::AddTrack() failed\n");
-                return;
+                std::vector<cricket::Device> devices;
+                bool getDevicesSucceeded = deviceManager->GetVideoCaptureDevices(&devices);
+                if (!getDevicesSucceeded) {
+                    printf("DeviceManager::GetVideoCaptureDevices() failed\n");
+                    return;
+                }
+
+                cricket::Device cameraDevice;
+                std::vector<cricket::Device>::iterator deviceIter = devices.begin();
+                while (deviceIter != devices.end()) {
+                    cameraDevice = *deviceIter;
+                    deviceIter++;
+                }
+
+                rtc::scoped_ptr<cricket::VideoCapturer> capturer(
+                        deviceManager->CreateVideoCapturer(cameraDevice));
+
+                webrtc::MediaConstraintsInterface::Constraints mandatory;
+                webrtc::MediaConstraintsInterface::Constraints optional;
+
+                mandatory.push_back(
+                        webrtc::MediaConstraintsInterface::Constraint(
+                                webrtc::MediaConstraintsInterface::kMaxWidth, "640"));
+                mandatory.push_back(
+                        webrtc::MediaConstraintsInterface::Constraint(
+                                webrtc::MediaConstraintsInterface::kMaxHeight, "480"));
+                optional.push_back(
+                        webrtc::MediaConstraintsInterface::Constraint(
+                                webrtc::MediaConstraintsInterface::kMaxFrameRate, "15"));
+
+                rtc::scoped_ptr<WebRtcEngineMediaConstraintsInterface> capturerConstraints(
+                        new WebRtcEngineMediaConstraintsInterface(mandatory, optional));
+
+                rtc::scoped_refptr<webrtc::VideoSourceInterface> videoSource(
+                        m_peerConnectionFactory->CreateVideoSource(capturer.release(),
+                                                                   capturerConstraints.get()));
+                if (videoSource == NULL) {
+                    printf("PeerConnectionFactoryInterface::CreateVideoSource() failed\n");
+                    return;
+                }
+
+                rtc::scoped_refptr<webrtc::VideoTrackInterface> videoTrack =
+                        m_peerConnectionFactory->CreateVideoTrack("video_track", videoSource.get());
+                if (videoTrack == NULL) {
+                    printf("PeerConnectionFactoryInterface::CreateVideoTrack() failed\n");
+                    return;
+                }
+
+                videoTrack->AddRenderer(m_localRenderer);
+
+                bool addTrackSucceeded = m_localMediaStream->AddTrack(videoTrack.get());
+                if (!addTrackSucceeded) {
+                    printf("VideoTrackInterface::AddTrack() failed\n");
+                    return;
+                }
+            } else {
+                __android_log_print(ANDROID_LOG_VERBOSE, "WebRtcEngine",
+                                    "WebRtcEngine::createLocalStream - 1 - %d, %d", m_capturer, m_captureConstraints);
+
+                rtc::scoped_refptr<webrtc::VideoSourceInterface> videoSource(
+                        m_peerConnectionFactory->CreateVideoSource(m_capturer,
+                                                                   m_captureConstraints));
+                if (videoSource == NULL) {
+                    printf("PeerConnectionFactoryInterface::CreateVideoSource() failed\n");
+                    return;
+                }
+
+                __android_log_print(ANDROID_LOG_VERBOSE, "WebRtcEngine",
+                                    "WebRtcEngine::createLocalStream - 2");
+
+                rtc::scoped_refptr<webrtc::VideoTrackInterface> videoTrack =
+                        m_peerConnectionFactory->CreateVideoTrack("video_track", videoSource.get());
+                if (videoTrack == NULL) {
+                    printf("PeerConnectionFactoryInterface::CreateVideoTrack() failed\n");
+                    return;
+                }
+
+                videoTrack->AddRenderer(m_localRenderer);
+
+                bool addTrackSucceeded = m_localMediaStream->AddTrack(videoTrack.get());
+                if (!addTrackSucceeded) {
+                    printf("VideoTrackInterface::AddTrack() failed\n");
+                    return;
+                }
+
+                __android_log_print(ANDROID_LOG_VERBOSE, "WebRtcEngine",
+                                    "WebRtcEngine::createLocalStream - 3");
             }
         }
       

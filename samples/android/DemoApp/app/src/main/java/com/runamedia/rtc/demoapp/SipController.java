@@ -37,6 +37,8 @@ import android.util.Log;
 
 import com.runamedia.rtc.demoapp.ServerSettings;
 
+import org.webrtc.MediaConstraints;
+
 public class SipController {
 
     public enum RegistrationEvent {
@@ -76,9 +78,9 @@ public class SipController {
 
     static {
         try {
-            System.loadLibrary("ResiprocateJni");
+            System.loadLibrary("rtcsip_jni");
         } catch (UnsatisfiedLinkError exc) {
-            Log.d(TAG, "ResiprocateJni library not found");
+            Log.e(TAG, "rtcsip_jni library not found");
         }
     }
 
@@ -135,6 +137,7 @@ public class SipController {
     public native void makeCall(String sipUri);
     public native void answer();
     public native void endCall(boolean destroyLocalStream);
+    public native void setVideoCapturer(long capturer, MediaConstraints captureConstraints);
     public native void setLocalView(long renderer);
     public native void setRemoteView(long renderer);
 }

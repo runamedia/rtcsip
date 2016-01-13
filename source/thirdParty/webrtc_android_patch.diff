@@ -1,0 +1,46 @@
+diff --git a/talk/app/webrtc/java/src/org/webrtc/VideoCapturer.java b/talk/app/webrtc/java/src/org/webrtc/VideoCapturer.java
+index 158cc34..31fa925 100644
+--- a/talk/app/webrtc/java/src/org/webrtc/VideoCapturer.java
++++ b/talk/app/webrtc/java/src/org/webrtc/VideoCapturer.java
+@@ -47,7 +47,7 @@ public class VideoCapturer {
+   }
+ 
+   // Package-visible for PeerConnectionFactory.
+-  long takeNativeVideoCapturer() {
++  public long takeNativeVideoCapturer() {
+     if (nativeVideoCapturer == 0) {
+       throw new RuntimeException("Capturer can only be taken once!");
+     }
+diff --git a/talk/app/webrtc/java/src/org/webrtc/VideoRenderer.java b/talk/app/webrtc/java/src/org/webrtc/VideoRenderer.java
+index 2e307fc..d598757 100644
+--- a/talk/app/webrtc/java/src/org/webrtc/VideoRenderer.java
++++ b/talk/app/webrtc/java/src/org/webrtc/VideoRenderer.java
+@@ -146,7 +146,7 @@ public class VideoRenderer {
+ 
+   // |this| either wraps a native (GUI) renderer or a client-supplied Callbacks
+   // (Java) implementation; this is indicated by |isWrappedVideoRenderer|.
+-  long nativeVideoRenderer;
++  public long nativeVideoRenderer;
+   private final boolean isWrappedVideoRenderer;
+ 
+   public static VideoRenderer createGui(int x, int y) {
+diff --git a/webrtc/base/java/src/org/webrtc/Logging.java b/webrtc/base/java/src/org/webrtc/Logging.java
+index ea1bca3..5fd1c79 100644
+--- a/webrtc/base/java/src/org/webrtc/Logging.java
++++ b/webrtc/base/java/src/org/webrtc/Logging.java
+@@ -24,13 +24,13 @@ public class Logging {
+ 
+   static {
+     try {
+-      System.loadLibrary("jingle_peerconnection_so");
++      System.loadLibrary("rtcsip_jni");
+       nativeLibLoaded = true;
+     } catch (UnsatisfiedLinkError t) {
+       // If native logging is unavailable, log to system log.
+       fallbackLogger.setLevel(Level.ALL);
+ 
+-      fallbackLogger.log(Level.WARNING, "Failed to load jingle_peerconnection_so: ", t);
++      fallbackLogger.log(Level.WARNING, "Failed to load rtcsip_jni: ", t);
+     }
+   }
+ 

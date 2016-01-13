@@ -35,12 +35,20 @@
 #include <android/log.h>
 
 #include "SipControllerCore.h"
-#include "webrtc/voice_engine/include/voe_base.h"
+#include "talk/media/base/videorenderer.h"
+#include "talk/media/devices/videorendererfactory.h"
 #include "talk/app/webrtc/androidvideocapturer.h"
-#include "webrtc/modules/video_capture/video_capture_internal.h"
+#include "talk/app/webrtc/mediastreaminterface.h"
+#include "talk/app/webrtc/mediaconstraintsinterface.h"
+#include "talk/app/webrtc/java/jni/classreferenceholder.h"
+#include "talk/app/webrtc/java/jni/jni_helpers.h"
+#include "talk/app/webrtc/java/jni/native_handle_impl.h"
+#include "talk/app/webrtc/java/jni/androidvideocapturer_jni.h"
+#include "webrtc/voice_engine/include/voe_base.h"
 #include "webrtc/modules/video_render/video_render_internal.h"
 
 using namespace rtcsip;
+using namespace webrtc_jni;
 
 class SipControllerHandler;
 
@@ -52,6 +60,8 @@ static jclass g_errorTypeEnum;
 static SipControllerCore *g_sipControllerCore = NULL;
 static WebRtcEngine *g_webRtcEngine = NULL;
 static SipControllerHandler *g_sipControllerHandler = NULL;
+static cricket::VideoCapturer *g_capturer = NULL;
+static webrtc::MediaConstraintsInterface *g_captureConstraints = NULL;
 static webrtc::VideoRendererInterface *g_localRenderer = NULL;
 static webrtc::VideoRendererInterface *g_remoteRenderer = NULL;
 
@@ -80,21 +90,43 @@ JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_answer
 JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_endCall
     (JNIEnv *env, jobject, jboolean destroyLocalStream);
 
+JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_setVideoCapturer
+    (JNIEnv *, jobject, jlong j_capturer_pointer, jobject j_capture_constraints);
+
 JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_setLocalView
     (JNIEnv *, jobject, jlong j_renderer_pointer);
 
 JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_setRemoteView
     (JNIEnv *, jobject, jlong j_renderer_pointer);
 
-JNIEXPORT jlong JNICALL Java_com_runamedia_rtc_demoapp_VideoRenderer_nativeWrapVideoRenderer
-        (JNIEnv *jni, jobject, jobject j_callbacks);
+JNIEXPORT jlong JNICALL Java_org_webrtc_VideoCapturerAndroid_nativeCreateVideoCapturer
+        (JNIEnv* jni, jclass,
+         jobject j_video_capturer, jobject j_surface_texture_helper);
 
-JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_VideoRenderer_freeWrappedVideoRenderer
-        (JNIEnv*, jclass, jlong j_p);
+JNIEXPORT jobject JNICALL Java_org_webrtc_VideoCapturer_nativeCreateVideoCapturer
+    (JNIEnv* jni, jclass, jstring j_device_name);
 
-JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_VideoRenderer_nativeCopyPlane(
-        JNIEnv *jni, jclass, jobject j_src_buffer, jint width, jint height,
-        jint src_stride, jobject j_dst_buffer, jint dst_stride);
+JNIEXPORT void JNICALL Java_org_webrtc_VideoCapturer_free
+    (JNIEnv*, jclass, jlong j_p);
+
+JNIEXPORT jlong JNICALL Java_org_webrtc_VideoRenderer_nativeCreateGuiVideoRenderer
+    (JNIEnv* jni, jclass, int x, int y);
+
+JNIEXPORT jlong JNICALL Java_org_webrtc_VideoRenderer_nativeWrapVideoRenderer
+    (JNIEnv* jni, jclass, jobject j_callbacks);
+
+JNIEXPORT void JNICALL Java_org_webrtc_VideoRenderer_nativeCopyPlane
+    (JNIEnv *jni, jclass, jobject j_src_buffer, jint width, jint height,
+    jint src_stride, jobject j_dst_buffer, jint dst_stride);
+
+JNIEXPORT void JNICALL Java_org_webrtc_VideoRenderer_freeGuiVideoRenderer
+    (JNIEnv*, jclass, jlong j_p);
+
+JNIEXPORT void JNICALL Java_org_webrtc_VideoRenderer_freeWrappedVideoRenderer
+    (JNIEnv*, jclass, jlong j_p);
+
+JNIEXPORT void JNICALL Java_org_webrtc_VideoRenderer_releaseNativeFrame
+    (JNIEnv* jni, jclass, jlong j_frame_ptr);
 }
 
 class SipControllerHandler : public SipRegistrationHandler, public SipCallHandler, public SipLogHandler,
@@ -228,177 +260,178 @@ public:
     }
 };
 
-class ScopedLocalRefFrame {
+// Wrapper for a Java MediaConstraints object.  Copies all needed data so when
+// the constructor returns the Java object is no longer needed.
+class ConstraintsWrapper : public webrtc::MediaConstraintsInterface {
 public:
-    explicit ScopedLocalRefFrame(JNIEnv* jni) : jni_(jni) {
-        jni_->PushLocalFrame(0);
+    ConstraintsWrapper(JNIEnv* jni, jobject j_constraints) {
+        PopulateConstraintsFromJavaPairList(
+              jni, j_constraints, "mandatory", &mandatory_);
+        PopulateConstraintsFromJavaPairList(
+              jni, j_constraints, "optional", &optional_);
     }
-    ~ScopedLocalRefFrame() {
-        jni_->PopLocalFrame(NULL);
-    }
+
+    virtual ~ConstraintsWrapper() {}
+
+    // MediaConstraintsInterface.
+    const Constraints& GetMandatory() const override { return mandatory_; }
+
+    const Constraints& GetOptional() const override { return optional_; }
 
 private:
-    JNIEnv* jni_;
-};
-
-template<class T>
-class ScopedGlobalRef {
-public:
-    ScopedGlobalRef(JNIEnv* jni, T obj)
-            : obj_(static_cast<T>(jni->NewGlobalRef(obj))) {}
-    ~ScopedGlobalRef() {
-        JNIEnv *env;
-        bool isAttached = false;
-
-        if (g_jvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        {
-            g_jvm->AttachCurrentThread(&env, NULL);
-            isAttached = true;
+    // Helper for translating a List<Pair<String, String>> to a Constraints.
+    static void PopulateConstraintsFromJavaPairList(
+            JNIEnv* jni, jobject j_constraints,
+            const char* field_name, Constraints* field) {
+        jfieldID j_id = GetFieldID(jni,
+              GetObjectClass(jni, j_constraints), field_name, "Ljava/util/List;");
+        jobject j_list = GetObjectField(jni, j_constraints, j_id);
+        jmethodID j_iterator_id = GetMethodID(jni,
+              GetObjectClass(jni, j_list), "iterator", "()Ljava/util/Iterator;");
+        jobject j_iterator = jni->CallObjectMethod(j_list, j_iterator_id);
+        CHECK_EXCEPTION(jni) << "error during CallObjectMethod";
+        jmethodID j_has_next = GetMethodID(jni,
+        GetObjectClass(jni, j_iterator), "hasNext", "()Z");
+        jmethodID j_next = GetMethodID(jni,
+              GetObjectClass(jni, j_iterator), "next", "()Ljava/lang/Object;");
+        while (jni->CallBooleanMethod(j_iterator, j_has_next)) {
+            CHECK_EXCEPTION(jni) << "error during CallBooleanMethod";
+            jobject entry = jni->CallObjectMethod(j_iterator, j_next);
+            CHECK_EXCEPTION(jni) << "error during CallObjectMethod";
+            jmethodID get_key = GetMethodID(jni,
+                    GetObjectClass(jni, entry), "getKey", "()Ljava/lang/String;");
+            jstring j_key = reinterpret_cast<jstring>(
+                    jni->CallObjectMethod(entry, get_key));
+            CHECK_EXCEPTION(jni) << "error during CallObjectMethod";
+            jmethodID get_value = GetMethodID(jni,
+                    GetObjectClass(jni, entry), "getValue", "()Ljava/lang/String;");
+            jstring j_value = reinterpret_cast<jstring>(
+                    jni->CallObjectMethod(entry, get_value));
+            CHECK_EXCEPTION(jni) << "error during CallObjectMethod";
+            field->push_back(Constraint(JavaToStdString(jni, j_key),
+                                        JavaToStdString(jni, j_value)));
         }
-
-        env->DeleteGlobalRef(obj_);
-
-        if (isAttached)
-            g_jvm->DetachCurrentThread();
+        CHECK_EXCEPTION(jni) << "error during CallBooleanMethod";
     }
-    T operator*() const {
-        return obj_;
-    }
-private:
-    T obj_;
+
+    Constraints mandatory_;
+    Constraints optional_;
 };
 
-class NativeHandleImpl {
+// Adapter presenting a cricket::VideoRenderer as a
+// webrtc::VideoRendererInterface.
+class VideoRendererWrapper : public webrtc::VideoRendererInterface {
 public:
-    NativeHandleImpl() : texture_object_(NULL), texture_id_(-1) {}
+    static VideoRendererWrapper* Create(cricket::VideoRenderer* renderer) {
+        if (renderer)
+            return new VideoRendererWrapper(renderer);
+        return NULL;
+    }
 
-    void* GetHandle() {
-        return texture_object_;
-    }
-    int GetTextureId() {
-        return texture_id_;
-    }
-    void SetTextureObject(void *texture_object, int texture_id) {
-        texture_object_ = reinterpret_cast<jobject>(texture_object);
-        texture_id_ = texture_id;
+    virtual ~VideoRendererWrapper() {}
+
+    // This wraps VideoRenderer which still has SetSize.
+    void RenderFrame(const cricket::VideoFrame* video_frame) override {
+        ScopedLocalRefFrame local_ref_frame(AttachCurrentThreadIfNeeded());
+        const cricket::VideoFrame* frame =
+            video_frame->GetCopyWithRotationApplied();
+        if (width_ != frame->GetWidth() || height_ != frame->GetHeight()) {
+            width_ = frame->GetWidth();
+            height_ = frame->GetHeight();
+            renderer_->SetSize(width_, height_, 0);
+        }
+        renderer_->RenderFrame(frame);
     }
 
 private:
-    jobject texture_object_;
-    int32_t texture_id_;
+    explicit VideoRendererWrapper(cricket::VideoRenderer* renderer)
+        : width_(0), height_(0), renderer_(renderer) {}
+    int width_, height_;
+    rtc::scoped_ptr<cricket::VideoRenderer> renderer_;
 };
 
-class JavaVideoRendererWrapper : public webrtc::VideoRendererInterface
-{
+// Wrapper dispatching webrtc::VideoRendererInterface to a Java VideoRenderer
+// instance.
+class JavaVideoRendererWrapper : public webrtc::VideoRendererInterface {
 public:
     JavaVideoRendererWrapper(JNIEnv* jni, jobject j_callbacks)
         : j_callbacks_(jni, j_callbacks),
-          j_render_frame_id_(jni->GetMethodID(
-                  jni->GetObjectClass(j_callbacks), "renderFrame",
-                  "(Lcom/runamedia/rtc/demoapp/VideoRenderer$I420Frame;)V")),
-          j_frame_class_(jni,
-                         jni->FindClass("com/runamedia/rtc/demoapp/VideoRenderer$I420Frame")),
-          j_i420_frame_ctor_id_(jni->GetMethodID(
-                  *j_frame_class_, "<init>", "(III[I[Ljava/nio/ByteBuffer;)V")),
-          j_texture_frame_ctor_id_(jni->GetMethodID(
-                  *j_frame_class_, "<init>",
-                  "(IIILjava/lang/Object;I)V")),
-          j_byte_buffer_class_(jni, jni->FindClass("java/nio/ByteBuffer"))
-    { }
+            j_render_frame_id_(GetMethodID(
+                jni, GetObjectClass(jni, j_callbacks), "renderFrame",
+                "(Lorg/webrtc/VideoRenderer$I420Frame;)V")),
+            j_frame_class_(jni,
+                           jni->FindClass("org/webrtc/VideoRenderer$I420Frame")),
+            j_i420_frame_ctor_id_(GetMethodID(
+                    jni, *j_frame_class_, "<init>", "(III[I[Ljava/nio/ByteBuffer;J)V")),
+            j_texture_frame_ctor_id_(GetMethodID(
+	                jni, *j_frame_class_, "<init>",
+	                "(IIII[FJ)V")),
+            j_byte_buffer_class_(jni, jni->FindClass("java/nio/ByteBuffer")) {
+        CHECK_EXCEPTION(jni);
+    }
 
     virtual ~JavaVideoRendererWrapper() {}
 
-    virtual void RenderFrame(const cricket::VideoFrame* video_frame) override
-    {
-        JNIEnv *env;
-        bool isAttached = false;
-
-        if (g_jvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        {
-            g_jvm->AttachCurrentThread(&env, NULL);
-            isAttached = true;
-        }
-
-        {
-            ScopedLocalRefFrame local_ref_frame(env);
-            jobject j_frame = (video_frame->GetNativeHandle() != nullptr)
+    void RenderFrame(const cricket::VideoFrame* video_frame) override {
+        ScopedLocalRefFrame local_ref_frame(jni());
+        jobject j_frame = (video_frame->GetNativeHandle() != nullptr)
                               ? CricketToJavaTextureFrame(video_frame)
                               : CricketToJavaI420Frame(video_frame);
-            env->CallVoidMethod(*j_callbacks_, j_render_frame_id_, j_frame);
-        }
-
-        if (isAttached)
-            g_jvm->DetachCurrentThread();
+        // |j_callbacks_| is responsible for releasing |j_frame| with
+        // VideoRenderer.renderFrameDone().
+        jni()->CallVoidMethod(*j_callbacks_, j_render_frame_id_, j_frame);
+        CHECK_EXCEPTION(jni());
     }
 
-    virtual bool CanApplyRotation() override { return true; }
-
 private:
-    jobject CricketToJavaI420Frame(const cricket::VideoFrame* frame)
-    {
-        JNIEnv *env;
-        bool isAttached = false;
+    // Make a shallow copy of |frame| to be used with Java. The callee has
+    // ownership of the frame, and the frame should be released with
+    // VideoRenderer.releaseNativeFrame().
+    static jlong javaShallowCopy(const cricket::VideoFrame* frame) {
+        return jlongFromPointer(frame->Copy());
+    }
 
-        if (g_jvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        {
-            g_jvm->AttachCurrentThread(&env, NULL);
-            isAttached = true;
-        }
-
-        jintArray strides = env->NewIntArray(3);
-        jint* strides_array = env->GetIntArrayElements(strides, NULL);
+    // Return a VideoRenderer.I420Frame referring to the data in |frame|.
+    jobject CricketToJavaI420Frame(const cricket::VideoFrame* frame) {
+        jintArray strides = jni()->NewIntArray(3);
+        jint* strides_array = jni()->GetIntArrayElements(strides, NULL);
         strides_array[0] = frame->GetYPitch();
         strides_array[1] = frame->GetUPitch();
         strides_array[2] = frame->GetVPitch();
-        env->ReleaseIntArrayElements(strides, strides_array, 0);
-        jobjectArray planes = env->NewObjectArray(3, *j_byte_buffer_class_, NULL);
-        jobject y_buffer = env->NewDirectByteBuffer(
-                const_cast<uint8*>(frame->GetYPlane()),
-                frame->GetYPitch() * frame->GetHeight());
-        jobject u_buffer = env->NewDirectByteBuffer(
-                const_cast<uint8*>(frame->GetUPlane()), frame->GetChromaSize());
-        jobject v_buffer = env->NewDirectByteBuffer(
-                const_cast<uint8*>(frame->GetVPlane()), frame->GetChromaSize());
-        env->SetObjectArrayElement(planes, 0, y_buffer);
-        env->SetObjectArrayElement(planes, 1, u_buffer);
-        env->SetObjectArrayElement(planes, 2, v_buffer);
-        jobject i420_frame = env->NewObject(
-                *j_frame_class_, j_i420_frame_ctor_id_,
-                frame->GetWidth(), frame->GetHeight(),
-                static_cast<int>(frame->GetVideoRotation()),
-                strides, planes);
-
-        if (isAttached)
-            g_jvm->DetachCurrentThread();
-
-        return i420_frame;
+        jni()->ReleaseIntArrayElements(strides, strides_array, 0);
+        jobjectArray planes = jni()->NewObjectArray(3, *j_byte_buffer_class_, NULL);
+        jobject y_buffer =
+            jni()->NewDirectByteBuffer(const_cast<uint8_t*>(frame->GetYPlane()),
+                                       frame->GetYPitch() * frame->GetHeight());
+        jobject u_buffer = jni()->NewDirectByteBuffer(
+            const_cast<uint8_t*>(frame->GetUPlane()), frame->GetChromaSize());
+        jobject v_buffer = jni()->NewDirectByteBuffer(
+            const_cast<uint8_t*>(frame->GetVPlane()), frame->GetChromaSize());
+        jni()->SetObjectArrayElement(planes, 0, y_buffer);
+        jni()->SetObjectArrayElement(planes, 1, u_buffer);
+        jni()->SetObjectArrayElement(planes, 2, v_buffer);
+        return jni()->NewObject(
+            *j_frame_class_, j_i420_frame_ctor_id_,
+            frame->GetWidth(), frame->GetHeight(),
+            static_cast<int>(frame->GetVideoRotation()),
+            strides, planes, javaShallowCopy(frame));
     }
 
-    jobject CricketToJavaTextureFrame(const cricket::VideoFrame* frame)
-    {
-        JNIEnv *env;
-        bool isAttached = false;
-
-        if (g_jvm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK)
-        {
-            g_jvm->AttachCurrentThread(&env, NULL);
-            isAttached = true;
-        }
-
+    // Return a VideoRenderer.I420Frame referring texture object in |frame|.
+    jobject CricketToJavaTextureFrame(const cricket::VideoFrame* frame) {
         NativeHandleImpl* handle =
-                reinterpret_cast<NativeHandleImpl*>(frame->GetNativeHandle());
-        jobject texture_object = reinterpret_cast<jobject>(handle->GetHandle());
-        int texture_id = handle->GetTextureId();
-        jobject texture_frame = env->NewObject(
+            reinterpret_cast<NativeHandleImpl*>(frame->GetNativeHandle());
+        jfloatArray sampling_matrix = jni()->NewFloatArray(16);
+        jni()->SetFloatArrayRegion(sampling_matrix, 0, 16, handle->sampling_matrix);
+        return jni()->NewObject(
                 *j_frame_class_, j_texture_frame_ctor_id_,
                 frame->GetWidth(), frame->GetHeight(),
                 static_cast<int>(frame->GetVideoRotation()),
-                texture_object, texture_id);
+                handle->oes_texture_id, sampling_matrix, javaShallowCopy(frame));
+    }
 
-        if (isAttached)
-            g_jvm->DetachCurrentThread();
-
-        return texture_frame;
+    JNIEnv* jni() {
+        return AttachCurrentThreadIfNeeded();
     }
 
     ScopedGlobalRef<jobject> j_callbacks_;
@@ -416,7 +449,7 @@ JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_init
 
     webrtc::VoiceEngine::SetAndroidObjects(g_jvm, context);
     webrtc::SetRenderAndroidVM(g_jvm);
-    webrtc::SetCaptureAndroidVM(g_jvm, context);
+    AndroidVideoCapturerJni::SetAndroidObjects(env, context);
 
     SipServerSettings serverSettings;
 
@@ -476,6 +509,7 @@ JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_unregisterUs
 JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_makeCall
         (JNIEnv *env, jobject, jstring j_sipUri)
 {
+    g_webRtcEngine->setVideoCapturer(g_capturer, g_captureConstraints);
     g_webRtcEngine->setLocalRenderer(g_localRenderer);
     g_webRtcEngine->setRemoteRenderer(g_remoteRenderer);
 
@@ -489,6 +523,7 @@ JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_makeCall
 JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_answer
         (JNIEnv *, jobject)
 {
+    g_webRtcEngine->setVideoCapturer(g_capturer, g_captureConstraints);
     g_webRtcEngine->setLocalRenderer(g_localRenderer);
     g_webRtcEngine->setRemoteRenderer(g_remoteRenderer);
 
@@ -499,6 +534,15 @@ JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_endCall
         (JNIEnv *env, jobject, jboolean destroyLocalStream)
 {
     g_sipControllerCore->terminateSession(destroyLocalStream);
+}
+
+JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_setVideoCapturer
+        (JNIEnv *env, jobject, jlong j_capturer_pointer, jobject j_capture_constraints)
+{
+    rtc::scoped_ptr<ConstraintsWrapper> constraints(
+                new ConstraintsWrapper(env, j_capture_constraints));
+    g_capturer = reinterpret_cast<cricket::VideoCapturer*>(j_capturer_pointer);
+    g_captureConstraints = constraints.release();
 }
 
 JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_setLocalView
@@ -513,32 +557,79 @@ JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_setRemoteVie
     g_remoteRenderer = reinterpret_cast<webrtc::VideoRendererInterface*>(j_renderer_pointer);
 }
 
-JNIEXPORT jlong JNICALL Java_com_runamedia_rtc_demoapp_VideoRenderer_nativeWrapVideoRenderer
-        (JNIEnv *jni, jobject, jobject j_callbacks)
+JNIEXPORT jobject JNICALL Java_org_webrtc_VideoCapturer_nativeCreateVideoCapturer
+        (JNIEnv* jni, jclass, jstring j_device_name)
+{
+  // Since we can't create platform specific java implementations in Java, we
+  // defer the creation to C land.
+    jclass j_video_capturer_class(
+            jni->FindClass("org/webrtc/VideoCapturerAndroid"));
+    const int camera_id = jni->CallStaticIntMethod(
+            j_video_capturer_class,
+            GetStaticMethodID(jni, j_video_capturer_class, "lookupDeviceName",
+                              "(Ljava/lang/String;)I"),
+            j_device_name);
+    CHECK_EXCEPTION(jni) << "error during VideoCapturerAndroid.lookupDeviceName";
+    if (camera_id == -1)
+        return nullptr;
+    jobject j_video_capturer = jni->NewObject(
+            j_video_capturer_class,
+            GetMethodID(jni, j_video_capturer_class, "<init>", "(I)V"), camera_id);
+    CHECK_EXCEPTION(jni) << "error during creation of VideoCapturerAndroid";
+    jfieldID helper_fid = GetFieldID(jni, j_video_capturer_class, "surfaceHelper",
+                                     "Lorg/webrtc/SurfaceTextureHelper;");
+
+    rtc::scoped_refptr<webrtc::AndroidVideoCapturerDelegate> delegate =
+            new rtc::RefCountedObject<AndroidVideoCapturerJni>(
+                    jni, j_video_capturer,
+                    GetObjectField(jni, j_video_capturer, helper_fid));
+    rtc::scoped_ptr<cricket::VideoCapturer> capturer(
+            new webrtc::AndroidVideoCapturer(delegate));
+
+    const jmethodID j_videocapturer_set_native_capturer(GetMethodID(
+            jni, j_video_capturer_class, "setNativeCapturer", "(J)V"));
+    jni->CallVoidMethod(j_video_capturer,
+                        j_videocapturer_set_native_capturer,
+                        jlongFromPointer(capturer.release()));
+    CHECK_EXCEPTION(jni) << "error during setNativeCapturer";
+
+    return j_video_capturer;
+}
+
+JNIEXPORT void JNICALL Java_org_webrtc_VideoCapturer_free
+        (JNIEnv*, jclass, jlong j_p)
+{
+    delete reinterpret_cast<cricket::VideoCapturer*>(j_p);
+}
+
+JNIEXPORT jlong JNICALL Java_org_webrtc_VideoRenderer_nativeCreateGuiVideoRenderer
+        (JNIEnv* jni, jclass, int x, int y)
+{
+    rtc::scoped_ptr<VideoRendererWrapper> renderer(VideoRendererWrapper::Create(
+            cricket::VideoRendererFactory::CreateGuiVideoRenderer(x, y)));
+    return (jlong)renderer.release();
+}
+
+JNIEXPORT jlong JNICALL Java_org_webrtc_VideoRenderer_nativeWrapVideoRenderer
+        (JNIEnv* jni, jclass, jobject j_callbacks)
 {
     rtc::scoped_ptr<JavaVideoRendererWrapper> renderer(
             new JavaVideoRendererWrapper(jni, j_callbacks));
     return (jlong)renderer.release();
 }
 
-JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_VideoRenderer_freeWrappedVideoRenderer
-        (JNIEnv*, jclass, jlong j_p)
-{
-    delete reinterpret_cast<JavaVideoRendererWrapper*>(j_p);
-}
-
-JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_VideoRenderer_nativeCopyPlane(
-        JNIEnv *jni, jclass, jobject j_src_buffer, jint width, jint height,
+JNIEXPORT void JNICALL Java_org_webrtc_VideoRenderer_nativeCopyPlane
+        (JNIEnv *jni, jclass, jobject j_src_buffer, jint width, jint height,
         jint src_stride, jobject j_dst_buffer, jint dst_stride)
 {
     size_t src_size = jni->GetDirectBufferCapacity(j_src_buffer);
     size_t dst_size = jni->GetDirectBufferCapacity(j_dst_buffer);
-    CHECK(src_stride >= width) << "Wrong source stride " << src_stride;
-    CHECK(dst_stride >= width) << "Wrong destination stride " << dst_stride;
-    CHECK(src_size >= src_stride * height)
-    << "Insufficient source buffer capacity " << src_size;
-    CHECK(dst_size >= dst_stride * height)
-    << "Isufficient destination buffer capacity " << dst_size;
+    RTC_CHECK(src_stride >= width) << "Wrong source stride " << src_stride;
+    RTC_CHECK(dst_stride >= width) << "Wrong destination stride " << dst_stride;
+    RTC_CHECK(src_size >= src_stride * height)
+            << "Insufficient source buffer capacity " << src_size;
+    RTC_CHECK(dst_size >= dst_stride * height)
+            << "Isufficient destination buffer capacity " << dst_size;
     uint8_t *src =
             reinterpret_cast<uint8_t*>(jni->GetDirectBufferAddress(j_src_buffer));
     uint8_t *dst =
@@ -554,9 +645,27 @@ JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_VideoRenderer_nativeCopyPl
     }
 }
 
+JNIEXPORT void JNICALL Java_org_webrtc_VideoRenderer_freeGuiVideoRenderer
+        (JNIEnv*, jclass, jlong j_p)
+{
+    delete reinterpret_cast<VideoRendererWrapper*>(j_p);
+}
+
+JNIEXPORT void JNICALL Java_org_webrtc_VideoRenderer_freeWrappedVideoRenderer
+        (JNIEnv*, jclass, jlong j_p)
+{
+    delete reinterpret_cast<JavaVideoRendererWrapper*>(j_p);
+}
+
+JNIEXPORT void JNICALL Java_org_webrtc_VideoRenderer_releaseNativeFrame
+        (JNIEnv* jni, jclass, jlong j_frame_ptr)
+{
+    delete reinterpret_cast<const cricket::VideoFrame*>(j_frame_ptr);
+}
+
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
-    __android_log_print(ANDROID_LOG_VERBOSE, "resiprocate_jni", "JNI_OnLoad");
+    __android_log_print(ANDROID_LOG_VERBOSE, "rtcsip_jni", "JNI_OnLoad");
 
     g_jvm = jvm;
 
@@ -572,6 +681,18 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 
     jclass j_errorTypeEnum = env->FindClass("com/runamedia/rtc/demoapp/SipController$ErrorType");
     g_errorTypeEnum = reinterpret_cast<jclass>(env->NewGlobalRef(j_errorTypeEnum));
+	
+    jint ret = InitGlobalJniVariables(jvm);
+    if (ret < 0)
+      return -1;
 
-    return JNI_VERSION_1_6;
+    LoadGlobalClassReferenceHolder();
+
+    return ret;
+}
+
+JNIEXPORT void JNICALL JNI_OnUnLoad(JavaVM *jvm, void *reserved)
+{
+    __android_log_print(ANDROID_LOG_VERBOSE, "rtcsip_jni", "JNI_OnUnLoad");
+    FreeGlobalClassReferenceHolder();
 }

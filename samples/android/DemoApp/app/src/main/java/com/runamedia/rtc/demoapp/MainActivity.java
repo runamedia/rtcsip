@@ -45,6 +45,13 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 
+import org.webrtc.CameraEnumerationAndroid;
+import org.webrtc.MediaConstraints;
+import org.webrtc.RendererCommon;
+import org.webrtc.VideoCapturerAndroid;
+import org.webrtc.VideoRenderer;
+import org.webrtc.VideoRendererGui;
+
 public class MainActivity extends ActionBarActivity {
 
     private enum CallState {
@@ -60,9 +67,9 @@ public class MainActivity extends ActionBarActivity {
 
     private SipController sipController = new SipController();
 
+    private MediaConstraints videoCaptureConstraints;
+
     private GLSurfaceView surfaceView;
-    private VideoRenderer localVideoRenderer;
-    private VideoRenderer remoteVideoRenderer;
 
     private CallState callState = CallState.IDLE;
 
@@ -83,12 +90,13 @@ public class MainActivity extends ActionBarActivity {
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
-        VideoRenderer.Callbacks localRenderer = VideoRendererGui.create(0, 0, 50, 100,
-                RendererCommon.ScalingType.SCALE_ASPECT_FILL, true);
-        VideoRenderer.Callbacks remoteRenderer = VideoRendererGui.create(50, 0, 50, 100,
-                RendererCommon.ScalingType.SCALE_ASPECT_FILL, false);
-        localVideoRenderer = new VideoRenderer(localRenderer);
-        remoteVideoRenderer = new VideoRenderer(remoteRenderer);
+        videoCaptureConstraints = new MediaConstraints();
+        videoCaptureConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
+                "maxWidth", Integer.toString(640)));
+        videoCaptureConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
+                "maxHeight", Integer.toString(480)));
+        videoCaptureConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
+                "maxFrameRate", Integer.toString(15)));
 
         final Button affirmativeButton = (Button) findViewById(R.id.affirmativeButton);
         final Button negativeButton = (Button) findViewById(R.id.negativeButton);
@@ -150,6 +158,21 @@ public class MainActivity extends ActionBarActivity {
                     }
                     LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
                     videoViewLinearLayout.addView(surfaceView);
+                    String cameraDeviceName = CameraEnumerationAndroid.getDeviceName(1);
+                    Log.d(TAG, "Opening camera: " + cameraDeviceName);
+                    VideoCapturerAndroid videoCapturer =
+                            VideoCapturerAndroid.create(cameraDeviceName, null, null);
+                    if (videoCapturer == null) {
+                        Log.e(TAG, "Failed to open camera");
+                        return;
+                    }
+                    sipController.setVideoCapturer(videoCapturer.takeNativeVideoCapturer(), videoCaptureConstraints);
+                    VideoRenderer.Callbacks localRenderer = VideoRendererGui.create(0, 0, 50, 100,
+                            RendererCommon.ScalingType.SCALE_ASPECT_FILL, true);
+                    VideoRenderer.Callbacks remoteRenderer = VideoRendererGui.create(50, 0, 50, 100,
+                            RendererCommon.ScalingType.SCALE_ASPECT_FILL, false);
+                    VideoRenderer localVideoRenderer = new VideoRenderer(localRenderer);
+                    VideoRenderer remoteVideoRenderer = new VideoRenderer(remoteRenderer);
                     sipController.setLocalView(localVideoRenderer.nativeVideoRenderer);
                     sipController.setRemoteView(remoteVideoRenderer.nativeVideoRenderer);
                     sipController.makeCall(sipUrl);
@@ -168,6 +191,21 @@ public class MainActivity extends ActionBarActivity {
                     }
                     LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
                     videoViewLinearLayout.addView(surfaceView);
+                    String cameraDeviceName = CameraEnumerationAndroid.getDeviceName(1);
+                    Log.d(TAG, "Opening camera: " + cameraDeviceName);
+                    VideoCapturerAndroid videoCapturer =
+                            VideoCapturerAndroid.create(cameraDeviceName, null, null);
+                    if (videoCapturer == null) {
+                        Log.e(TAG, "Failed to open camera");
+                        return;
+                    }
+                    sipController.setVideoCapturer(videoCapturer.takeNativeVideoCapturer(), videoCaptureConstraints);
+                    VideoRenderer.Callbacks localRenderer = VideoRendererGui.create(0, 0, 50, 100,
+                            RendererCommon.ScalingType.SCALE_ASPECT_FILL, true);
+                    VideoRenderer.Callbacks remoteRenderer = VideoRendererGui.create(50, 0, 50, 100,
+                            RendererCommon.ScalingType.SCALE_ASPECT_FILL, false);
+                    VideoRenderer localVideoRenderer = new VideoRenderer(localRenderer);
+                    VideoRenderer remoteVideoRenderer = new VideoRenderer(remoteRenderer);
                     sipController.setLocalView(localVideoRenderer.nativeVideoRenderer);
                     sipController.setRemoteView(remoteVideoRenderer.nativeVideoRenderer);
                     sipController.answer();

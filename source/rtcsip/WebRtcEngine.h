@@ -102,7 +102,8 @@ namespace rtcsip
     public:
         WebRtcEngine();
         ~WebRtcEngine();
-      
+
+        void setVideoCapturer(cricket::VideoCapturer *capturer, webrtc::MediaConstraintsInterface *captureConstraints);
         void setLocalRenderer(webrtc::VideoRendererInterface *renderer);
         void setRemoteRenderer(webrtc::VideoRendererInterface *renderer);
         void setHasAudio(bool hasAudio);
@@ -149,6 +150,8 @@ namespace rtcsip
         std::mutex m_callbackMutex;
         std::condition_variable m_callbackCondition;
         bool m_waitForCallback;
+        cricket::VideoCapturer *m_capturer;
+        webrtc::MediaConstraintsInterface *m_captureConstraints;
         webrtc::VideoRendererInterface *m_localRenderer;
         webrtc::VideoRendererInterface *m_remoteRenderer;
         std::string m_localSdp;
