@@ -15,8 +15,6 @@
 		94533C511B07813600DEEB24 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 94533C4F1B07813600DEEB24 /* LaunchScreen.xib */; };
 		94533C6B1B07849800DEEB24 /* VideoCallViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 94533C6A1B07849800DEEB24 /* VideoCallViewController.m */; };
 		94533C6E1B0786EE00DEEB24 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94533C6D1B0786EE00DEEB24 /* AVFoundation.framework */; };
-		94533C741B07AADA00DEEB24 /* libicucore.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 94533C731B07AADA00DEEB24 /* libicucore.dylib */; };
-		94533C781B07AAF800DEEB24 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 94533C771B07AAF800DEEB24 /* libc++.dylib */; };
 		94533C851B07AB9400DEEB24 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94533C791B07AB9400DEEB24 /* AudioToolbox.framework */; };
 		94533C861B07AB9400DEEB24 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94533C7A1B07AB9400DEEB24 /* CFNetwork.framework */; };
 		94533C871B07AB9400DEEB24 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94533C7B1B07AB9400DEEB24 /* CoreAudio.framework */; };
@@ -44,13 +42,6 @@
 			proxyType = 2;
 			remoteGlobalIDString = 94533CA01B0A54D000DEEB24;
 			remoteInfo = rtcsip;
-		};
-		9439FBCE1B11B76A00F11EF0 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 9439FBC61B11B76A00F11EF0 /* rtcsip.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 94533CAB1B0A54D100DEEB24;
-			remoteInfo = rtcsipTests;
 		};
 		9439FBDC1B11C62400F11EF0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -85,16 +76,12 @@
 		94533C421B07813600DEEB24 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		94533C441B07813600DEEB24 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		94533C451B07813600DEEB24 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		94533C471B07813600DEEB24 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		94533C481B07813600DEEB24 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		94533C4B1B07813600DEEB24 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		94533C4D1B07813600DEEB24 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		94533C501B07813600DEEB24 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		94533C691B07849800DEEB24 /* VideoCallViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoCallViewController.h; sourceTree = "<group>"; };
 		94533C6A1B07849800DEEB24 /* VideoCallViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoCallViewController.m; sourceTree = "<group>"; };
 		94533C6D1B0786EE00DEEB24 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
-		94533C731B07AADA00DEEB24 /* libicucore.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libicucore.dylib; path = usr/lib/libicucore.dylib; sourceTree = SDKROOT; };
-		94533C771B07AAF800DEEB24 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
 		94533C791B07AB9400DEEB24 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		94533C7A1B07AB9400DEEB24 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		94533C7B1B07AB9400DEEB24 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -136,8 +123,6 @@
 				94533C8F1B07AB9400DEEB24 /* QuartzCore.framework in Frameworks */,
 				94533C901B07AB9400DEEB24 /* Security.framework in Frameworks */,
 				94533C6E1B0786EE00DEEB24 /* AVFoundation.framework in Frameworks */,
-				94533C781B07AAF800DEEB24 /* libc++.dylib in Frameworks */,
-				94533C741B07AADA00DEEB24 /* libicucore.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,26 +133,16 @@
 			isa = PBXGroup;
 			children = (
 				9439FBCD1B11B76A00F11EF0 /* rtcsip.framework */,
-				9439FBCF1B11B76A00F11EF0 /* rtcsipTests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		9439FBD81B11C59A00F11EF0 /* NOT_IN_USE */ = {
-			isa = PBXGroup;
-			children = (
-				94533C471B07813600DEEB24 /* ViewController.h */,
-				94533C481B07813600DEEB24 /* ViewController.m */,
-			);
-			name = NOT_IN_USE;
 			sourceTree = "<group>";
 		};
 		94533C341B07813600DEEB24 = {
 			isa = PBXGroup;
 			children = (
+				94533C3F1B07813600DEEB24 /* DemoApp */,
 				E2B093381B0D31D80055D4BC /* Projects */,
 				94533C951B0A475D00DEEB24 /* Frameworks */,
-				94533C3F1B07813600DEEB24 /* DemoApp */,
 				94533C3E1B07813600DEEB24 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -183,13 +158,9 @@
 		94533C3F1B07813600DEEB24 /* DemoApp */ = {
 			isa = PBXGroup;
 			children = (
-				9439FBD81B11C59A00F11EF0 /* NOT_IN_USE */,
+				9439FBE01B11C87100F11EF0 /* Consts.h */,
 				94533C441B07813600DEEB24 /* AppDelegate.h */,
 				94533C451B07813600DEEB24 /* AppDelegate.m */,
-				94533C4A1B07813600DEEB24 /* Main.storyboard */,
-				94533C4D1B07813600DEEB24 /* Images.xcassets */,
-				94533C4F1B07813600DEEB24 /* LaunchScreen.xib */,
-				94533C401B07813600DEEB24 /* Supporting Files */,
 				94533C691B07849800DEEB24 /* VideoCallViewController.h */,
 				94533C6A1B07849800DEEB24 /* VideoCallViewController.m */,
 				9483DFCC1B0E51FD005C74D5 /* DemoTableViewController.h */,
@@ -197,7 +168,10 @@
 				9439FBD91B11C5D600F11EF0 /* DemoManager.h */,
 				9439FBDA1B11C5D600F11EF0 /* DemoManager.m */,
 				9439FBDF1B11C85300F11EF0 /* Demo-PrefixHeader.pch */,
-				9439FBE01B11C87100F11EF0 /* Consts.h */,
+				94533C4A1B07813600DEEB24 /* Main.storyboard */,
+				94533C4D1B07813600DEEB24 /* Images.xcassets */,
+				94533C4F1B07813600DEEB24 /* LaunchScreen.xib */,
+				94533C401B07813600DEEB24 /* Supporting Files */,
 			);
 			path = DemoApp;
 			sourceTree = "<group>";
@@ -227,8 +201,6 @@
 				94533C801B07AB9400DEEB24 /* CoreVideo.framework */,
 				94533C911B07ABB000DEEB24 /* GLKit.framework */,
 				94533C811B07AB9400DEEB24 /* ImageIO.framework */,
-				94533C771B07AAF800DEEB24 /* libc++.dylib */,
-				94533C731B07AADA00DEEB24 /* libicucore.dylib */,
 				94533C821B07AB9400DEEB24 /* OpenGLES.framework */,
 				94533C831B07AB9400DEEB24 /* QuartzCore.framework */,
 				94533C841B07AB9400DEEB24 /* Security.framework */,
@@ -287,7 +259,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 94533C381B07813600DEEB24 /* Build configuration list for PBXProject "DemoAppDevelopment" */;
+			buildConfigurationList = 94533C381B07813600DEEB24 /* Build configuration list for PBXProject "DemoApp" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -317,13 +289,6 @@
 			fileType = wrapper.framework;
 			path = rtcsip.framework;
 			remoteRef = 9439FBCC1B11B76A00F11EF0 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		9439FBCF1B11B76A00F11EF0 /* rtcsipTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = rtcsipTests.xctest;
-			remoteRef = 9439FBCE1B11B76A00F11EF0 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -536,7 +501,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		94533C381B07813600DEEB24 /* Build configuration list for PBXProject "DemoAppDevelopment" */ = {
+		94533C381B07813600DEEB24 /* Build configuration list for PBXProject "DemoApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				94533C5E1B07813600DEEB24 /* Debug */,
