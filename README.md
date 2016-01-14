@@ -6,20 +6,21 @@ Source code is released under free BSD license.
 
 To clone the repository type the following command: git clone https://github.com/runamedia/rtcsip.git --recursive
 
-At the moment the only supported develpment platform is OSX.
+At the moment, the only supported develpment platform is OSX.
 
 ## Install instructions for Android
-
+Prerequisites: Android Studio version 2.0 (use Canary channel to make an update), Android NDK r10
 ```
 1. Clone the repository
 2. cd rtcsip
 3. ./rtcsip_sync_android.sh
-4. ./rtcsip_build_android.sh
-5. Open Android Studio project samples/android/DemoApp (required Android Studio version is 2.0 - use Canary channel to make an update)
+4. export NDK_PATH=<path-to-ndk-bundle>
+5. ./rtcsip_build_android.sh
+6. Open Android Studio project samples/android/DemoApp
 ```
 
 ##Install instructions for iOS
-
+Prerequisites: Xcode 7
 ```
 1. Clone the repository
 2. cd rtcsip
