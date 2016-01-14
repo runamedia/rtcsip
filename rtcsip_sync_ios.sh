@@ -12,13 +12,13 @@ pushd src
 
 git reset --hard f01f8c9
 
-mkdir out/Debug-iphoneos
+mkdir -p out/Debug-iphoneos
 
 pushd out/Debug-iphoneos
 
 curl -O ftp://developer.runamedia.com/webrtc-ios-libs-20151223.tar.gz
 
-tar -xzf webrtc-ios-libs-20151223.tar.gz
+tar xzf webrtc-ios-libs-20151223.tar.gz
 
 rm webrtc-ios-libs-20151223.tar.gz
 

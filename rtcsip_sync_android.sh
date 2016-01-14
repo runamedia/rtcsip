@@ -20,13 +20,13 @@ popd
 
 pushd samples/android/DemoApp/app/src/main
 
-mkdir jniLibs/armeabi-v7a
+mkdir -p jniLibs/armeabi-v7a
 
 pushd jniLibs/armeabi-v7a
 
 curl -O ftp://developer.runamedia.com/webrtc-android-libs-20151223.tar.gz
 
-tar -xzf webrtc-android-libs-20151223.tar.gz
+tar xzf webrtc-android-libs-20151223.tar.gz
 
 rm webrtc-android-libs-20151223.tar.gz
 
