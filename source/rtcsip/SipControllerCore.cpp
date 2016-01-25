@@ -34,6 +34,7 @@
 
 #ifdef ANDROID
 #include <android/log.h>
+#include "rutil/AndroidLogger.hxx"
 #endif
 
 namespace rtcsip
@@ -118,8 +119,13 @@ namespace rtcsip
         m_username = username;
         m_password = password;
         
+#ifndef ANDROID
         Log::setLevel(Log::Stack);
-        
+#else
+       AndroidLogger alog;
+       Log::initialize(Log::Cout, Log::Stack, "SIP", alog);
+#endif
+
         Data dnsServer("208.67.222.222");
         
         m_dnsServers.push_back(Tuple(dnsServer, 0, UNKNOWN_TRANSPORT).toGenericIPAddress());
