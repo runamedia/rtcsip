@@ -34,7 +34,6 @@
 
 #ifdef ANDROID
 #include <android/log.h>
-#include "rutil/AndroidLogger.hxx"
 #endif
 
 namespace rtcsip
@@ -122,8 +121,7 @@ namespace rtcsip
 #ifndef ANDROID
         Log::setLevel(Log::Stack);
 #else
-       AndroidLogger alog;
-       Log::initialize(Log::Cout, Log::Stack, "SIP", alog);
+       Log::initialize(Log::Cout, Log::Stack, "SIP", m_androidLog);
 #endif
 
         Data dnsServer("208.67.222.222");

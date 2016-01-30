@@ -58,6 +58,9 @@
 #include "rutil/Logger.hxx"
 #include "resip/stack/PlainContents.hxx"
 #include "resip/stack/GenericContents.hxx"
+#ifdef ANDROID
+#include "rutil/AndroidLogger.hxx"
+#endif
 
 #include <mutex>
 #include <thread>
@@ -204,7 +207,10 @@ namespace rtcsip
         SipLogHandler *m_logHandler;
         SipErrorHandler *m_errorHandler;
         char m_logBuffer[65536];
-        
+#ifdef ANDROID
+        AndroidLogger m_androidLog;
+#endif
+
         SipStack* m_stack;
         DnsStub::NameserverList m_dnsServers;
         EventStackThread* m_stackThread;
