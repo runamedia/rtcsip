@@ -64,6 +64,8 @@ public class MainActivity extends ActionBarActivity {
     private static final String TAG = "MainActivity";
 
     private static final String SIP_SERVER_DOMAIN = "developer.runamedia.com";
+    private static final String SIP_DNS_SERVER = "8.8.8.8";
+    private static final String SIP_PROXY_SERVER = "";
 
     private SipController sipController = new SipController();
 
@@ -115,6 +117,8 @@ public class MainActivity extends ActionBarActivity {
 
         ServerSettings serverSettings = new ServerSettings();
         serverSettings.domain = SIP_SERVER_DOMAIN;
+        serverSettings.dnsServer = SIP_DNS_SERVER;
+        serverSettings.proxyServer = SIP_PROXY_SERVER;
 
         sipController.init(this, serverSettings);
 

@@ -34,4 +34,6 @@ package com.runamedia.rtc.demoapp;
 
 public class ServerSettings {
     public String domain;
+    public String dnsServer;
+    public String proxyServer;
 }

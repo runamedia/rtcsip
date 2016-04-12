@@ -94,6 +94,8 @@ namespace rtcsip
     struct SipServerSettings
     {
       std::string domain;
+      std::string dnsServer;
+      std::string proxyServer;
     };
     
     class SipRegistrationHandler
@@ -218,6 +220,7 @@ namespace rtcsip
         FdPollGrp* m_pollGrp;
         EventThreadInterruptor* m_interruptor;
         NameAddr m_clientAddress;
+        Uri m_outboundProxy;
         SharedPtr<MasterProfile> m_masterProfile;
         std::auto_ptr<ClientAuthManager> m_clientAuth;
         SharedPtr<ClientInviteSession> m_clientInviteSession;
@@ -227,6 +230,8 @@ namespace rtcsip
         std::string m_password;
         std::string m_uri;
         std::string m_remoteUri;
+        std::string m_dnsServer;
+        std::string m_proxyServer;
   };
 
 }

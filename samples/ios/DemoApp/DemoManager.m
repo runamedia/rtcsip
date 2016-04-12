@@ -82,6 +82,12 @@
         self.lView = [RTCSIPUtility createVideoViewWithFrame:CGRectMake(0.0, 0.0, 160.0, 200.0)];
         self.rView = [RTCSIPUtility createVideoViewWithFrame:CGRectMake(160.0, 0.0, 320.0, 200.0)];
 #endif
+      
+        ServerSettings *settings = [[ServerSettings alloc] init];
+        settings.domain = DEMO_SIP_SERVER;
+        settings.dnsServer = DEMO_DNS_SERVER;
+        settings.proxyServer = DEMO_PROXY_SERVER;
+      
         self.sipController = [[SipController alloc] init];
         
         [self.sipController registerRegistrationHandler:^(RegistrationEvent event, NSString *user) {

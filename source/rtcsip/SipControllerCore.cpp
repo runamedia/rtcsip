@@ -54,6 +54,8 @@ namespace rtcsip
         m_errorHandler(NULL)
     {
         m_domain = serverSettings.domain;
+        m_dnsServer = serverSettings.dnsServer;
+        m_proxyServer = serverSettings.proxyServer;
         
         if (webRtcEngine != NULL)
             webRtcEngine->registerWebRtcEngineObserver(this);
@@ -121,13 +123,27 @@ namespace rtcsip
 #ifndef ANDROID
         Log::setLevel(Log::Stack);
 #else
-       Log::initialize(Log::Cout, Log::Stack, "SIP", m_androidLog);
+        Log::initialize(Log::Cout, Log::Stack, "SIP", m_androidLog);
+        Log::setLevel(Log::Stack);
 #endif
+      
+        if (m_proxyServer.size() != 0)
+          m_outboundProxy = Uri(Data(m_proxyServer));
+        else
+          m_outboundProxy = Uri();
 
-        Data dnsServer("208.67.222.222");
-        
-        m_dnsServers.push_back(Tuple(dnsServer, 0, UNKNOWN_TRANSPORT).toGenericIPAddress());
-        
+        m_dnsServers.clear();
+        if (m_dnsServer.size() != 0)
+        {
+          Data dnsServer(m_dnsServer.c_str());
+          m_dnsServers.push_back(Tuple(dnsServer, 0, UNKNOWN_TRANSPORT).toGenericIPAddress());
+        }
+        else
+        {
+          Data dnsServer("8.8.8.8");
+          m_dnsServers.push_back(Tuple(dnsServer, 0, UNKNOWN_TRANSPORT).toGenericIPAddress());
+        }
+
         m_stack = new SipStack(0, m_dnsServers);
         
         m_userAgent = new DialogUsageManager(*m_stack);
@@ -670,6 +686,9 @@ namespace rtcsip
         
         m_masterProfile->setDefaultFrom(m_clientAddress);
         m_masterProfile->setDigestCredential(m_clientAddress.uri().host(), m_clientAddress.uri().user(), m_password.c_str());
+      
+        if (!m_outboundProxy.host().empty())
+          m_masterProfile->setOutboundProxy(m_outboundProxy);
         
         m_masterProfile->setKeepAliveTimeForDatagram(30);
         m_masterProfile->setKeepAliveTimeForStream(120);

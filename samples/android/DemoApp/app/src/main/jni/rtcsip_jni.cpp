@@ -456,14 +456,24 @@ JNIEXPORT void JNICALL Java_com_runamedia_rtc_demoapp_SipController_init
     jclass j_serverSettingsClass = env->GetObjectClass(j_settings);
 
     jfieldID j_fidDomain = env->GetFieldID(j_serverSettingsClass, "domain", "Ljava/lang/String;");
+    jfieldID j_fidDnsServer = env->GetFieldID(j_serverSettingsClass, "dnsServer", "Ljava/lang/String;");
+    jfieldID j_fidProxyServer = env->GetFieldID(j_serverSettingsClass, "proxyServer", "Ljava/lang/String;");
 
     jstring j_domain = static_cast<jstring>(env->GetObjectField(j_settings, j_fidDomain));
+    jstring j_dnsServer = static_cast<jstring>(env->GetObjectField(j_settings, j_fidDnsServer));
+    jstring j_proxyServer = static_cast<jstring>(env->GetObjectField(j_settings, j_fidProxyServer));
 
     const char *domain = env->GetStringUTFChars(j_domain, NULL);
+    const char *dnsServer = env->GetStringUTFChars(j_dnsServer, NULL);
+    const char *proxyServer = env->GetStringUTFChars(j_proxyServer, NULL);
 
     serverSettings.domain = domain;
+    serverSettings.dnsServer = dnsServer;
+    serverSettings.proxyServer = proxyServer;
 
     env->ReleaseStringUTFChars(j_domain, domain);
+    env->ReleaseStringUTFChars(j_dnsServer, dnsServer);
+    env->ReleaseStringUTFChars(j_proxyServer, proxyServer);
 
     g_webRtcEngine = new WebRtcEngine();
 

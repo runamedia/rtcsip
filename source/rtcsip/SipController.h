@@ -54,6 +54,8 @@ typedef enum {
 @interface ServerSettings : NSObject
 
 @property (nonatomic, assign) NSString *domain;
+@property (nonatomic, assign) NSString *dnsServer;
+@property (nonatomic, assign) NSString *proxyServer;
 
 @end
 

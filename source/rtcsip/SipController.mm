@@ -56,6 +56,8 @@ public:
   
     void setLocalVideoView(RTCEAGLVideoView *view);
     void setRemoteVideoView(RTCEAGLVideoView *view);
+    void setDnsServer(std::string dns);
+    void setProxyServer(std::string proxy);
     void setHasAudio(bool hasAudio);
     void setHasVideo(bool hasVideo);
     
@@ -218,6 +220,8 @@ void SipControllerCoreWrapper::handleError(SipErrorType sipType, std::string err
 @implementation ServerSettings
 
 @synthesize domain;
+@synthesize dnsServer;
+@synthesize proxyServer;
 
 @end
 
@@ -255,6 +259,8 @@ void SipControllerCoreWrapper::handleError(SipErrorType sipType, std::string err
     if (self = [super init]) {
         rtcsip::SipServerSettings sipServerSettings;
         sipServerSettings.domain = [serverSettings.domain UTF8String];
+        sipServerSettings.dnsServer = [serverSettings.dnsServer UTF8String];
+        sipServerSettings.proxyServer = [serverSettings.proxyServer UTF8String];
       
         _webRtcEngine = new WebRtcEngine();
         _sipControllerCore = new rtcsip::SipControllerCore(sipServerSettings, _webRtcEngine);

@@ -34,7 +34,6 @@
 #define DemoApp_Consts_h
 
 #define DEMO_DEFAULT_PASSWORD   @"123456"
-#define DEMO_WEB_SOCKET_URL     @"wss://sip-ws.example.com"
 
 #define DEMO_USER_1             @"1001"
 #define DEMO_USER_2             @"1002"
@@ -43,6 +42,8 @@
 
 #define DEMO_SIP_SERVER         @"developer.runamedia.com"
 #define DEMO_SIP_SERVER_PORT    5060
+#define DEMO_DNS_SERVER         @"8.8.8.8"
+#define DEMO_PROXY_SERVER       @""
 
 #define DEMO_NOTIFICATION_CONTACT_SELECTED  @"notificationContactSelected"
 #endif
