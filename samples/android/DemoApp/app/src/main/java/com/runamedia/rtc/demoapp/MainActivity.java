@@ -69,26 +69,64 @@ public class MainActivity extends ActionBarActivity {
 
     private SipController sipController = new SipController();
 
+    VideoCapturerAndroid videoCapturer;
+
     private MediaConstraints videoCaptureConstraints;
 
     private GLSurfaceView surfaceView;
+    private VideoRenderer localVideoRenderer;
+    private VideoRenderer remoteVideoRenderer;
 
     private CallState callState = CallState.IDLE;
 
     private AudioManager audioManager;
 
+    private void setupVideo() {
+        surfaceView = new GLSurfaceView(MainActivity.this);
+        VideoRendererGui.setView(surfaceView, new Runnable() {
+            @Override
+            public void run() {
+            }
+        });
+        VideoRenderer.Callbacks localRenderer = VideoRendererGui.create(0, 0, 50, 100,
+                RendererCommon.ScalingType.SCALE_ASPECT_FILL, true);
+        VideoRenderer.Callbacks remoteRenderer = VideoRendererGui.create(50, 0, 50, 100,
+                RendererCommon.ScalingType.SCALE_ASPECT_FILL, false);
+        localVideoRenderer = new VideoRenderer(localRenderer);
+        remoteVideoRenderer = new VideoRenderer(remoteRenderer);
+        sipController.setLocalView(localVideoRenderer.nativeVideoRenderer);
+        sipController.setRemoteView(remoteVideoRenderer.nativeVideoRenderer);
+        LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
+        videoViewLinearLayout.addView(surfaceView);
+        String cameraDeviceName = CameraEnumerationAndroid.getDeviceName(1);
+        Log.d(TAG, "Opening camera: " + cameraDeviceName);
+        videoCapturer = VideoCapturerAndroid.create(cameraDeviceName, null, null);
+        if (videoCapturer == null) {
+            Log.e(TAG, "Failed to open camera");
+            return;
+        }
+        sipController.setVideoCapturer(videoCapturer.takeNativeVideoCapturer(), videoCaptureConstraints);
+    }
+
+    private void shutdownVideo() {
+        LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
+        videoViewLinearLayout.removeAllViews();
+        sipController.setLocalView(0);
+        sipController.setRemoteView(0);
+        localVideoRenderer.dispose();
+        remoteVideoRenderer.dispose();
+        VideoRendererGui.dispose();
+        localVideoRenderer = null;
+        remoteVideoRenderer = null;
+        surfaceView = null;
+        videoCapturer.dispose();
+        videoCapturer = null;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        surfaceView = new GLSurfaceView(this);
-        VideoRendererGui.setView(surfaceView, new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        });
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
@@ -160,25 +198,7 @@ public class MainActivity extends ActionBarActivity {
                         sipController.setHasVideo(true);
                         audioManager.setSpeakerphoneOn(true);
                     }
-                    LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
-                    videoViewLinearLayout.addView(surfaceView);
-                    String cameraDeviceName = CameraEnumerationAndroid.getDeviceName(1);
-                    Log.d(TAG, "Opening camera: " + cameraDeviceName);
-                    VideoCapturerAndroid videoCapturer =
-                            VideoCapturerAndroid.create(cameraDeviceName, null, null);
-                    if (videoCapturer == null) {
-                        Log.e(TAG, "Failed to open camera");
-                        return;
-                    }
-                    sipController.setVideoCapturer(videoCapturer.takeNativeVideoCapturer(), videoCaptureConstraints);
-                    VideoRenderer.Callbacks localRenderer = VideoRendererGui.create(0, 0, 50, 100,
-                            RendererCommon.ScalingType.SCALE_ASPECT_FILL, true);
-                    VideoRenderer.Callbacks remoteRenderer = VideoRendererGui.create(50, 0, 50, 100,
-                            RendererCommon.ScalingType.SCALE_ASPECT_FILL, false);
-                    VideoRenderer localVideoRenderer = new VideoRenderer(localRenderer);
-                    VideoRenderer remoteVideoRenderer = new VideoRenderer(remoteRenderer);
-                    sipController.setLocalView(localVideoRenderer.nativeVideoRenderer);
-                    sipController.setRemoteView(remoteVideoRenderer.nativeVideoRenderer);
+                    setupVideo();
                     sipController.makeCall(sipUrl);
                     affirmativeButton.setText("");
                     negativeButton.setText("End Call");
@@ -193,25 +213,7 @@ public class MainActivity extends ActionBarActivity {
                         sipController.setHasVideo(true);
                         audioManager.setSpeakerphoneOn(true);
                     }
-                    LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
-                    videoViewLinearLayout.addView(surfaceView);
-                    String cameraDeviceName = CameraEnumerationAndroid.getDeviceName(1);
-                    Log.d(TAG, "Opening camera: " + cameraDeviceName);
-                    VideoCapturerAndroid videoCapturer =
-                            VideoCapturerAndroid.create(cameraDeviceName, null, null);
-                    if (videoCapturer == null) {
-                        Log.e(TAG, "Failed to open camera");
-                        return;
-                    }
-                    sipController.setVideoCapturer(videoCapturer.takeNativeVideoCapturer(), videoCaptureConstraints);
-                    VideoRenderer.Callbacks localRenderer = VideoRendererGui.create(0, 0, 50, 100,
-                            RendererCommon.ScalingType.SCALE_ASPECT_FILL, true);
-                    VideoRenderer.Callbacks remoteRenderer = VideoRendererGui.create(50, 0, 50, 100,
-                            RendererCommon.ScalingType.SCALE_ASPECT_FILL, false);
-                    VideoRenderer localVideoRenderer = new VideoRenderer(localRenderer);
-                    VideoRenderer remoteVideoRenderer = new VideoRenderer(remoteRenderer);
-                    sipController.setLocalView(localVideoRenderer.nativeVideoRenderer);
-                    sipController.setRemoteView(remoteVideoRenderer.nativeVideoRenderer);
+                    setupVideo();
                     sipController.answer();
                     affirmativeButton.setText("");
                     negativeButton.setText("End Call");
@@ -224,9 +226,8 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View view) {
                 if (callState == CallState.IN_CALL) {
-                    LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
-                    videoViewLinearLayout.removeAllViews();
                     sipController.endCall(true);
+                    shutdownVideo();
                     affirmativeButton.setText("Call");
                     negativeButton.setText("Disconnect");
                     callState = CallState.CONNECTED;
@@ -267,8 +268,7 @@ public class MainActivity extends ActionBarActivity {
                 } else if (event == SipController.CallEvent.TERMINATE_CALL) {
                     runOnUiThread(new Runnable() {
                         public void run() {
-                            LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
-                            videoViewLinearLayout.removeAllViews();
+                            shutdownVideo();
                             affirmativeButton.setText("Call");
                             negativeButton.setText("Disconnect");
                             callState = CallState.CONNECTED;
@@ -295,9 +295,8 @@ public class MainActivity extends ActionBarActivity {
                 if (callState == CallState.IN_CALL && type == SipController.ErrorType.WEBRTC_ERROR) {
                     runOnUiThread(new Runnable() {
                         public void run() {
-                            LinearLayout videoViewLinearLayout = (LinearLayout) findViewById(R.id.videoViewLinerLayout);
-                            videoViewLinearLayout.removeAllViews();
                             sipController.endCall(true);
+                            shutdownVideo();
                             affirmativeButton.setText("Call");
                             negativeButton.setText("Disconnect");
                             callState = CallState.CONNECTED;
@@ -308,7 +307,12 @@ public class MainActivity extends ActionBarActivity {
                         type == SipController.ErrorType.SIP_SESSION_ERROR) {
                     runOnUiThread(new Runnable() {
                         public void run() {
-                            sipController.endCall(false);
+                            if (callState == CallState.IN_CALL) {
+                                sipController.endCall(true);
+                                shutdownVideo();
+                            } else {
+                                sipController.endCall(false);
+                            }
                             affirmativeButton.setText("Call");
                             negativeButton.setText("Disconnect");
                             callState = CallState.CONNECTED;
@@ -321,6 +325,12 @@ public class MainActivity extends ActionBarActivity {
                     runOnUiThread(new Runnable() {
                         public void run() {
                             if (callState == CallState.CONNECTED) {
+                                if (callState == CallState.IN_CALL) {
+                                    sipController.endCall(true);
+                                    shutdownVideo();
+                                } else if (callState == CallState.INCOMING_CALL) {
+                                    sipController.endCall(false);
+                                }
                                 sipController.unregisterUser();
                                 affirmativeButton.setText("Connect");
                                 negativeButton.setText("");
