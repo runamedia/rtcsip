@@ -88,7 +88,7 @@
         settings.dnsServer = DEMO_DNS_SERVER;
         settings.proxyServer = DEMO_PROXY_SERVER;
       
-        self.sipController = [[SipController alloc] init];
+        self.sipController = [[SipController alloc] init:settings];
         
         [self.sipController registerRegistrationHandler:^(RegistrationEvent event, NSString *user) {
             dispatch_async(dispatch_get_main_queue(), ^{

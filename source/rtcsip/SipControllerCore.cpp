@@ -128,9 +128,14 @@ namespace rtcsip
 #endif
       
         if (m_proxyServer.size() != 0)
-          m_outboundProxy = Uri(Data(m_proxyServer));
+        {
+          std::string proxyAddress = "sip:" + m_proxyServer;
+          m_outboundProxy = Uri(Data(proxyAddress));
+        }
         else
+        {
           m_outboundProxy = Uri();
+        }
 
         m_dnsServers.clear();
         if (m_dnsServer.size() != 0)
@@ -688,8 +693,11 @@ namespace rtcsip
         m_masterProfile->setDigestCredential(m_clientAddress.uri().host(), m_clientAddress.uri().user(), m_password.c_str());
       
         if (!m_outboundProxy.host().empty())
-          m_masterProfile->setOutboundProxy(m_outboundProxy);
-        
+        {
+            m_masterProfile->setOutboundProxy(m_outboundProxy);
+            m_masterProfile->addSupportedOptionTag(Token(Symbols::Outbound));
+        }
+      
         m_masterProfile->setKeepAliveTimeForDatagram(30);
         m_masterProfile->setKeepAliveTimeForStream(120);
     }
