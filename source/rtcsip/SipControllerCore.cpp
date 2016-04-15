@@ -124,7 +124,6 @@ namespace rtcsip
         Log::setLevel(Log::Stack);
 #else
         Log::initialize(Log::Cout, Log::Stack, "SIP", m_androidLog);
-        Log::setLevel(Log::Stack);
 #endif
       
         if (m_proxyServer.size() != 0)
