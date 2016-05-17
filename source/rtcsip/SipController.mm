@@ -294,14 +294,18 @@ void SipControllerCoreWrapper::handleError(SipErrorType sipType, std::string err
 }
 
 - (void)makeCallTo:(NSString *)sipUri {
-    _sipControllerCoreWrapper->setLocalVideoView([self localView]);
-    _sipControllerCoreWrapper->setRemoteVideoView([self remoteView]);
+    if ([self localView])
+        _sipControllerCoreWrapper->setLocalVideoView([self localView]);
+    if ([self remoteView])
+        _sipControllerCoreWrapper->setRemoteVideoView([self remoteView]);
     _sipControllerCoreWrapper->createSession([sipUri UTF8String]);
 }
 
 - (void)answer {
-    _sipControllerCoreWrapper->setLocalVideoView([self localView]);
-    _sipControllerCoreWrapper->setRemoteVideoView([self remoteView]);
+    if ([self localView])
+        _sipControllerCoreWrapper->setLocalVideoView([self localView]);
+    if ([self remoteView])
+        _sipControllerCoreWrapper->setRemoteVideoView([self remoteView]);
     _sipControllerCoreWrapper->acceptSession();
 }
 
